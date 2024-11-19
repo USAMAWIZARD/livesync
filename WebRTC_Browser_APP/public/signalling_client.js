@@ -17,9 +17,13 @@ websocket.onmessage = async (message) => {
       console.log("start")
       myid = message.peer;
       if (is_sender_mode(mode)) {
-        await add_media();
-        video_stamp_2();
         //await add_media();
+
+        setVideo(await navigator.mediaDevices.getUserMedia({ video: true }));
+        var stamptrack = await video_stamp_2();
+        const mediaStream = new MediaStream();
+        mediaStream.addTrack(stamptrack);
+        peer.addTrack(stamptrack, mediaStream);
         send_offer();
       }
       //else
@@ -68,7 +72,7 @@ websocket.onmessage = async (message) => {
     console.log("new track added of kind", track.kind, track.id);
     let media_stream = new MediaStream([track]);
     setVideo(media_stream);
-    video_stamp_2();
+    recived_timestamped_video(track);
   }
 })();
 

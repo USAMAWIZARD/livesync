@@ -60,36 +60,8 @@ async function video_stamp_2() {
   const writer = trackGenerator.writable.getWriter();
   const video = document.getElementById('video_player');
 
-  const config = {
-    codec: "avc1.64001E",
-    width: 640,
-    height: 480,
-    bitrate: 2_000_000, // 2 Mbps
-    framerate: 30,
-    avc: { format: "annexb" }
-  };
 
-  const init = {
-    output: async (chunk, metadata) => {
-      console.log(chunk, metadata);
-      await writer.write(chunk);
-      writer.releaseLock();
-    },
-    error: (e) => {
-      console.log(e.message);
-    },
-  };
-
-  let frame_counter = 0;
-
-  if (!VideoEncoder.isConfigSupported(config)) {
-    console.error("VideoEncoder configuration not supported.");
-    return;
-  }
-  var encoder = new VideoEncoder(init);
-  encoder.configure(config)
-
-  const handleFrame = (now, metadata) => {
+  const handleFrame = async (now, metadata) => {
     console.log("Now (HighResTimeStamp):", now);
     console.log("Frame Metadata:", metadata);
 
@@ -99,21 +71,35 @@ async function video_stamp_2() {
       console.log("Capture Time is not available.");
     }
 
-    if (encoder.encodeQueueSize > 2) {
-      // Too many frames in flight, encoder is overwhelmed
-      // let's drop this frame.
-      //frame.close();
-    } else {
-      frame_counter++;
-      var frame = new VideoFrame(video);
-      const insert_keyframe = frame_counter % 150 === 0;
-      encoder.encode(frame, { keyFrame: insert_keyframe });
-      //frame.close();
-    }
+    var frame = new VideoFrame(video);
+    await writer.ready;
+    writer.write(frame);
+    frame.close();
 
     video.requestVideoFrameCallback(handleFrame);
   };
 
   video.requestVideoFrameCallback(handleFrame);
 
+  console.log(trackGenerator);
+  return trackGenerator;
+}
+async function recived_timestamped_video(videoTrack) {
+
+  const processor = new MediaStreamTrackProcessor(videoTrack);
+
+  // Get a readable stream for the frames
+  const reader = processor.readable.getReader();
+
+  // Process frames in a loop
+  while (true) {
+    const { value: frame, done } = await reader.read();
+    if (done) break; // Stop if no more frames
+
+    console.log("Frame timestamp:", frame.timestamp);
+    console.log("Frame resolution:", frame.displayWidth, frame.displayHeight);
+
+
+    frame.close();
+  }
 }
