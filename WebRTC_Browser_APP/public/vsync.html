@@ -1,0 +1,35 @@
+<html>
+  <head>
+
+    <script src="./video_stamp.js" defer></script>
+<script  src="./signalling_client.js" defer>
+    </script>
+
+
+    <title>peer</title>
+     </head>
+  <body>
+    <h1> WEBRTC SYNC</h1>
+  <h4>
+
+  </h4>
+  <h2 id="mode">
+  </h2> 
+  <video width="500" height="300" muted controls id="video_player" controls="true" autoplay="true">
+  </video>
+  <script> 
+
+var urlparams = new URLSearchParams(window.location.search);
+var mode = urlparams.get("mode");
+document.getElementById("mode").innerText = "mode : "+ mode;
+
+
+
+
+
+    </script>
+  </body>
+
+
+
+</html>
